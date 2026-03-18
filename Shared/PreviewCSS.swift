@@ -27,15 +27,17 @@ enum PreviewCSS {
         }
         a { color: #6699CC; }
         code {
-            background-color: #2A2A2A;
-            color: #E07070;
+            background-color: #2A2A2A !important;
+            color: #E07070 !important;
         }
         pre {
-            background-color: #2A2A2A;
-            border-color: #333333;
+            background-color: #2A2A2A !important;
+            border-color: #333333 !important;
+            color: #E0E0E0 !important;
         }
         pre code {
-            color: #E0E0E0;
+            background: none !important;
+            color: #E0E0E0 !important;
         }
         blockquote {
             border-left-color: #444444;
