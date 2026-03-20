@@ -21,7 +21,9 @@ Write with syntax highlighting, preview instantly, and get back to what matters.
 ## Features
 
 - **Syntax highlighting** — headings, bold, italic, links, code blocks, and more
-- **Instant preview** — rendered GitHub Flavored Markdown with Cmd+2
+- **Instant preview** — rendered GitHub Flavored Markdown, including Mermaid diagrams
+- **Side-by-side** — edit and preview simultaneously with synchronized scrolling
+- **PDF export** — export to PDF or print directly from the app
 - **Format shortcuts** — Cmd+B, Cmd+I, Cmd+K for bold, italic, and links
 - **QuickLook** — preview .md files right in Finder
 - **Light & Dark** — follows system appearance or set manually
