@@ -195,7 +195,8 @@ $DESC_ELEMENT
         type="application/octet-stream"
       />
     </item>
-$EXISTING_ITEMS  </channel>
+$EXISTING_ITEMS
+  </channel>
 </rss>
 APPCAST
 
