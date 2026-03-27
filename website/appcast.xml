@@ -3,6 +3,20 @@
   <channel>
     <title>Clearly</title>
     <item>
+      <title>Version 1.7.4</title>
+      <sparkle:version>1.7.4</sparkle:version>
+      <sparkle:shortVersionString>1.7.4</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+      <pubDate>Fri, 27 Mar 2026 12:19:36 +0000</pubDate>
+      <description><![CDATA[<ul><li>Opening multiple documents no longer freezes the editor when scroll sync is active</li><li>Faster syntax highlighting for documents with frontmatter</li></ul>]]></description>
+      <enclosure
+        url="https://github.com/Shpigford/clearly/releases/download/v1.7.4/Clearly.dmg"
+        sparkle:edSignature="c30F543D2v13L0pk3znOjhaIEj+b5VhlzWfw4p8NXXwh3TBYf76v/PeHuIhCUPPb5Y8TKg/97CrhtgO+2E5yAQ=="
+        length="6481334"
+        type="application/octet-stream"
+      />
+    </item>
+    <item>
       <title>Version 1.7.3</title>
       <sparkle:version>1.7.3</sparkle:version>
       <sparkle:shortVersionString>1.7.3</sparkle:shortVersionString>
