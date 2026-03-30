@@ -33,6 +33,62 @@ extension FocusedValues {
     }
 }
 
+// MARK: - Window Frame Persistence
+
+/// Sets NSWindow.frameAutosaveName so macOS automatically saves/restores window size and position.
+/// Uses a per-file autosave name so each document remembers its own window frame.
+struct WindowFrameSaver: NSViewRepresentable {
+    let fileURL: URL?
+
+    final class Coordinator {
+        var autosaveName: String?
+    }
+
+    private var autosaveName: String {
+        fileURL?.absoluteString ?? "ClearlyUntitledWindow"
+    }
+
+    func makeCoordinator() -> Coordinator {
+        Coordinator()
+    }
+
+    private func applyAutosaveName(
+        to window: NSWindow,
+        coordinator: Coordinator,
+        persistCurrentFrame: Bool
+    ) {
+        guard coordinator.autosaveName != autosaveName else { return }
+        coordinator.autosaveName = autosaveName
+        window.setFrameAutosaveName(autosaveName)
+        if persistCurrentFrame {
+            window.saveFrame(usingName: autosaveName)
+        }
+    }
+
+    func makeNSView(context: Context) -> NSView {
+        let view = NSView()
+        DispatchQueue.main.async {
+            if let window = view.window {
+                applyAutosaveName(
+                    to: window,
+                    coordinator: context.coordinator,
+                    persistCurrentFrame: false
+                )
+            }
+        }
+        return view
+    }
+
+    func updateNSView(_ nsView: NSView, context: Context) {
+        guard let window = nsView.window else { return }
+        applyAutosaveName(
+            to: window,
+            coordinator: context.coordinator,
+            persistCurrentFrame: context.coordinator.autosaveName != nil
+        )
+    }
+}
+
 struct HiddenToolbarBackground: ViewModifier {
     func body(content: Content) -> some View {
         if #available(macOS 15.0, *) {
@@ -159,6 +215,7 @@ struct ContentView: View {
             }
         }
         .modifier(HiddenToolbarBackground())
+        .background(WindowFrameSaver(fileURL: fileURL))
         .animation(nil, value: mode)
         .focusedSceneValue(\.viewMode, $mode)
         .focusedSceneValue(\.documentText, document.text)
