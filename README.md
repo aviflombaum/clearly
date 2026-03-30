@@ -26,6 +26,7 @@ Write with syntax highlighting, preview instantly, and get back to what matters.
 - **Side-by-side** — edit and preview simultaneously with synchronized scrolling
 - **PDF export** — export to PDF or print directly from the app
 - **Format shortcuts** — Cmd+B, Cmd+I, Cmd+K for bold, italic, and links
+- **Scratchpad** — menubar app with a global hotkey for capturing quick notes without opening a document
 - **QuickLook** — preview .md files right in Finder
 - **Light & Dark** — follows system appearance or set manually
 

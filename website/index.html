@@ -112,6 +112,10 @@
             gap: 20px;
         }
 
+        .feature-grid .feature:last-child:nth-child(odd) {
+            grid-column: 1 / -1;
+        }
+
         .feature {
             background: #141414;
             border: 1px solid #222;
@@ -215,6 +219,10 @@
                 <div class="feature">
                     <h3>Math &amp; Frontmatter</h3>
                     <p>KaTeX math expressions render beautifully. YAML frontmatter is formatted cleanly in both editor and preview.</p>
+                </div>
+                <div class="feature">
+                    <h3>Scratchpad</h3>
+                    <p>A menubar app with a global hotkey for jotting things down. Capture a thought without opening a full document.</p>
                 </div>
                 <div class="feature">
                     <h3>Open Source</h3>
