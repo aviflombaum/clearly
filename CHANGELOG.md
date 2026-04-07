@@ -2,6 +2,13 @@
 
 ## [Unreleased]
 
+## [1.11.0] - 2026-04-07
+- Editor and preview now toggle in place at the same scroll position, replacing side-by-side mode
+- Copy code blocks in preview with a one-click button
+- Cursor stays put when typing quickly in the editor
+- Save scratchpad notes to a file with Cmd+S
+- Cmd+Q no longer quits the app when only scratchpads are open
+
 ## [1.10.1] - 2026-04-03
 - New documents open in front instead of behind existing windows
 - Outline panel no longer overlaps the preview in side-by-side mode
