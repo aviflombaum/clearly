@@ -319,6 +319,23 @@ enum PreviewCSS {
         font-style: italic;
     }
 
+    .cd-annotation {
+        background: linear-gradient(180deg, rgba(255, 229, 122, 0.88), rgba(255, 214, 77, 0.92));
+        border-radius: 0.28em;
+        box-shadow: inset 0 -0.08em 0 rgba(173, 118, 0, 0.28);
+        color: inherit;
+        padding: 0 0.12em;
+        text-decoration: none;
+    }
+
+    .cd-annotation[data-comment] {
+        cursor: help;
+    }
+
+    .cd-annotation:hover {
+        background: linear-gradient(180deg, rgba(255, 236, 156, 0.96), rgba(255, 219, 92, 0.98));
+    }
+
     ul, ol {
         margin-bottom: 1em;
         padding-left: 1.5em;
@@ -459,6 +476,18 @@ enum PreviewCSS {
             background-color: #2A2A2A;
             border-color: #444444;
             color: #777777;
+        }
+    }
+
+    @media (prefers-color-scheme: dark) {
+        .cd-annotation {
+            background: linear-gradient(180deg, rgba(122, 92, 0, 0.9), rgba(163, 121, 0, 0.95));
+            box-shadow: inset 0 -0.08em 0 rgba(255, 214, 102, 0.22);
+            color: #FFF7D6;
+        }
+
+        .cd-annotation:hover {
+            background: linear-gradient(180deg, rgba(140, 105, 0, 0.96), rgba(181, 136, 0, 1));
         }
     }
 

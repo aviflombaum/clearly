@@ -8,3 +8,5 @@ build/
 .env
 .context/
 __pycache__/
+tmp
+docs

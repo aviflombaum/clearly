@@ -86,7 +86,8 @@ struct PreviewView: NSViewRepresentable {
 
     private func loadHTML(in webView: WKWebView, context: Context) {
         context.coordinator.lastContentKey = contentKey
-        let rawBody = MarkdownRenderer.renderHTML(markdown)
+        let projectedMarkdown = ChangedownAnnotationProjection.project(markdown).markdown
+        let rawBody = MarkdownRenderer.renderHTML(projectedMarkdown)
         let htmlBody = LocalImageSupport.resolveImageSources(in: rawBody, relativeTo: fileURL)
         let scrollJS = """
         // Track scroll fraction for position sync between editor and preview.
