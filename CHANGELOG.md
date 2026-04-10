@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+## [1.13.1] - 2026-04-09
+- Fresh app icon and menubar icon
+
 ## [1.13.0] - 2026-04-08
 - Create new untitled documents without saving them first
 - Bold and bold-italic text now renders visually in the editor instead of just showing markers
