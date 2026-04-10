@@ -3,6 +3,20 @@
   <channel>
     <title>Clearly</title>
     <item>
+      <title>Version 1.14.0</title>
+      <sparkle:version>1.14.0</sparkle:version>
+      <sparkle:shortVersionString>1.14.0</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+      <pubDate>Fri, 10 Apr 2026 22:00:18 +0000</pubDate>
+      <description><![CDATA[<ul><li>Clear your recent files list with one click from the sidebar</li><li>Show or hide hidden files in the file explorer</li><li>Copy files and folders from the toolbar or sidebar right-click menu</li></ul>]]></description>
+      <enclosure
+        url="https://github.com/Shpigford/clearly/releases/download/v1.14.0/Clearly.dmg"
+        sparkle:edSignature="uCctIlpAfJyUhWHhCaL/ZIkuSHnUIOXhQ5jSvCvTSLmn0NdZStJU3F1KOWHafAUImcAwCw7MshSQ2BCn11JvCg=="
+        length="8429359"
+        type="application/octet-stream"
+      />
+    </item>
+    <item>
       <title>Version 1.13.1</title>
       <sparkle:version>1.13.1</sparkle:version>
       <sparkle:shortVersionString>1.13.1</sparkle:shortVersionString>
