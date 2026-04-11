@@ -2,6 +2,17 @@
 
 ## [Unreleased]
 
+## [1.15.0] - 2026-04-11
+- Tables get captions, sortable columns, sticky headers, and a copy-as-TSV button
+- Code blocks get syntax highlighting for 27+ languages, line numbers, diff highlighting, and filename headers
+- Highlight text with ==marks==, write super^script^ and sub~script~, and use :emoji: shortcodes
+- 15 types of callouts and admonitions, with foldable support
+- Auto-generated table of contents with [TOC]
+- Click any preview element to jump to its source, toggle task checkboxes inline, and view images in a lightbox
+- Heading anchor links and footnote popovers
+- Sample Document available under the Help menu
+- Now licensed under FSL-1.1-MIT (converts to MIT after two years)
+
 ## [1.14.0] - 2026-04-10
 - Clear your recent files list with one click from the sidebar
 - Show or hide hidden files in the file explorer
