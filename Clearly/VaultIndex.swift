@@ -27,6 +27,7 @@ struct SearchFileGroup {
     let file: IndexedFile
     let vaultRootURL: URL
     let matchesFilename: Bool
+    let relevanceRank: Double
     let excerpts: [MatchExcerpt]
 }
 
@@ -44,7 +45,7 @@ struct LinkRecord {
 
 // MARK: - VaultIndex
 
-final class VaultIndex {
+final class VaultIndex: @unchecked Sendable {
 
     private let dbPool: DatabasePool
     let rootURL: URL
@@ -55,6 +56,21 @@ final class VaultIndex {
         self.rootURL = locationURL
 
         let indexDir = Self.indexDirectory()
+        try FileManager.default.createDirectory(at: indexDir, withIntermediateDirectories: true)
+
+        let hash = Self.pathHash(locationURL.standardizedFileURL.path)
+        let dbPath = indexDir.appendingPathComponent("\(hash).sqlite").path
+
+        dbPool = try DatabasePool(path: dbPath)
+
+        try migrate()
+    }
+
+    /// Init with explicit bundle identifier — used by ClearlyMCP to open the main app's index
+    init(locationURL: URL, bundleIdentifier: String) throws {
+        self.rootURL = locationURL
+
+        let indexDir = Self.indexDirectory(bundleIdentifier: bundleIdentifier)
         try FileManager.default.createDirectory(at: indexDir, withIntermediateDirectories: true)
 
         let hash = Self.pathHash(locationURL.standardizedFileURL.path)
@@ -342,7 +358,7 @@ final class VaultIndex {
             return try dbPool.read { db in
                 // FTS5 content search
                 let contentRows = try Row.fetchAll(db, sql: """
-                    SELECT f.*, highlight(files_fts, 1, '<<', '>>') AS highlighted_content
+                    SELECT f.*, highlight(files_fts, 1, '<<', '>>') AS highlighted_content, bm25(files_fts) AS rank
                     FROM files_fts
                     JOIN files f ON f.id = files_fts.rowid
                     WHERE files_fts MATCH ?
@@ -356,6 +372,7 @@ final class VaultIndex {
                 for row in contentRows {
                     let file = Self.indexedFile(from: row)
                     let highlightedContent: String = row["highlighted_content"] ?? ""
+                    let relevanceRank: Double = row["rank"] ?? Double.greatestFiniteMagnitude
                     let filenameMatches = searchTerms.contains { file.filename.lowercased().contains($0) }
 
                     // Find matching lines from FTS-highlighted content so stemmed/tokenized
@@ -381,6 +398,7 @@ final class VaultIndex {
                         file: file,
                         vaultRootURL: rootURL,
                         matchesFilename: filenameMatches,
+                        relevanceRank: relevanceRank,
                         excerpts: excerpts
                     )
                     orderedIds.append(file.id)
@@ -403,6 +421,7 @@ final class VaultIndex {
                                 file: file,
                                 vaultRootURL: self.rootURL,
                                 matchesFilename: true,
+                                relevanceRank: Double.greatestFiniteMagnitude,
                                 excerpts: []
                             )
                             orderedIds.append(file.id)
@@ -410,11 +429,12 @@ final class VaultIndex {
                     }
                 }
 
-                // Sort: filename matches first, then content-only, preserving bm25 order within
+                // Sort deterministically: filename matches first, then BM25 rank, then path.
                 let groups = orderedIds.compactMap { resultsByFileId[$0] }
                 return groups.sorted { a, b in
                     if a.matchesFilename != b.matchesFilename { return a.matchesFilename }
-                    return false // preserve bm25 order
+                    if a.relevanceRank != b.relevanceRank { return a.relevanceRank < b.relevanceRank }
+                    return a.file.path.localizedCaseInsensitiveCompare(b.file.path) == .orderedAscending
                 }
             }
         } catch {
@@ -647,6 +667,20 @@ final class VaultIndex {
         let dir = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
         let appName = Bundle.main.bundleIdentifier ?? "com.sabotage.clearly"
         return dir.appendingPathComponent("\(appName)/indexes")
+    }
+
+    /// Index directory for a specific bundle identifier — resolves sandbox container path for non-sandboxed callers (ClearlyMCP CLI)
+    private static func indexDirectory(bundleIdentifier: String) -> URL {
+        // Try sandbox container path first (where the sandboxed app stores its index)
+        let home = FileManager.default.homeDirectoryForCurrentUser
+        let containerPath = home
+            .appendingPathComponent("Library/Containers/\(bundleIdentifier)/Data/Library/Application Support/\(bundleIdentifier)/indexes")
+        if FileManager.default.fileExists(atPath: containerPath.path) {
+            return containerPath
+        }
+        // Fall back to standard Application Support (non-sandboxed or not yet created)
+        let dir = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
+        return dir.appendingPathComponent("\(bundleIdentifier)/indexes")
     }
 
     private static func pathHash(_ path: String) -> String {
