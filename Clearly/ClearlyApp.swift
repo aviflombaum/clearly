@@ -901,6 +901,7 @@ class ClearlySplitViewController: NSSplitViewController {
         let detailItem = NSSplitViewItem(viewController: detailHost)
         detailItem.minimumThickness = 400
         addSplitViewItem(detailItem)
+        splitView.autosaveName = "ClearlySidebar"
 
         if !workspace.isSidebarVisible {
             needsInitialCollapse = true
