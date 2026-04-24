@@ -2,6 +2,20 @@
 
 ## [Unreleased]
 
+## [2.5.0] - 2026-04-24
+- Paste and drop images directly into the editor
+- Drag and drop files and folders in the sidebar to reorganize
+- Adjust sidebar text size in Settings
+- New setting to hide the menu bar icon
+- CLI install no longer needs sudo or Terminal — installs to ~/.local/bin
+- Recoverable CLI install flow with clearer diagnostics
+- Public changelog page with in-app links
+- Fixed pasted text disappearing in the editor until you scrolled
+- Fixed ⌘+H removing the Dock icon instead of hiding windows
+- Fixed third-party cloud folders being labeled as iCloud in Sync settings
+- Fixed Settings not coming to the front when opened from the menu bar icon
+- Fixed inline LaTeX rendering on dollar-sign currency amounts
+
 ## [2.4.0] - 2026-04-23
 - Native macOS shell: two-column NavigationSplitView with folder tree + detail pane
 - Sidebar inherits your System Settings accent color (like Finder)
