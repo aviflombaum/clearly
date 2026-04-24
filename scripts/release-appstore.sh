@@ -183,6 +183,12 @@ fi
 echo "✅ Archive clean — no Sparkle framework."
 
 # ── 5. Export + upload to App Store Connect ──────────────────────────────────
+# Verify iCloud entitlements on the archived app BEFORE upload. The export
+# step uses destination=upload and uploads directly to ASC without leaving a
+# local .app behind, so we validate the archive (which is what gets signed
+# and shipped).
+scripts/verify-entitlements.sh build/Clearly-AppStore.xcarchive/Products/Applications/Clearly.app
+
 echo "🚀 Uploading to App Store Connect..."
 sed "s/\${APPLE_TEAM_ID}/$TEAM_ID/g" ExportOptions-AppStore.plist > build/ExportOptions-AppStore.plist
 xcodebuild -exportArchive \
@@ -190,9 +196,6 @@ xcodebuild -exportArchive \
   -exportOptionsPlist build/ExportOptions-AppStore.plist \
   -exportPath build/export-appstore \
   -allowProvisioningUpdates
-
-# Verify iCloud entitlements survived Xcode archive/export
-scripts/verify-entitlements.sh build/export-appstore/Clearly.app
 
 # ── 6. Restore Info.plist and Xcode project (with Sparkle) ──────────────────
 echo "🔄 Restoring Sparkle project..."
