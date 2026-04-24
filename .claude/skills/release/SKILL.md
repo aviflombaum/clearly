@@ -20,6 +20,8 @@ Ask with `mcp__conductor__AskUserQuestion`:
 
 If "Both", run the Mac flow end-to-end, then the iOS flow. If either platform fails, stop — do NOT auto-continue to the other.
 
+When running "Both", the un-scoped commit range on iOS overlaps Mac's (older commits show up in both `<latest-mac-tag>..HEAD` and `<latest-ios-tag>..HEAD`). If the user already answered "proceed anyway" for those commits on the Mac flow, do NOT re-ask on iOS — inherit the answer. Only ask again if iOS has *new* un-scoped commits that Mac's range didn't include.
+
 ### Step 1: Verify prerequisites
 
 Mac flow:
@@ -103,9 +105,9 @@ Updates depend on platform:
 
 **Mac:**
 1. Edit `project.yml`. Update `MARKETING_VERSION` in all three Mac-side targets: `Clearly`, `ClearlyQuickLook`, `ClearlyCLI`. Do NOT touch `Clearly-iOS`.
-2. Edit `website/index.html`. Update the `class="requires"` line:
+2. Edit `website/index.html`. Update the `class="requires"` line — match the existing minimum-macOS wording, do not hardcode a name:
    ```html
-   <p class="requires">v<VERSION> &middot; Requires macOS Sonoma or later</p>
+   <p class="requires">v<VERSION> &middot; Requires macOS Sequoia or later</p>
    ```
 3. Commit:
    ```bash
@@ -156,7 +158,11 @@ If yes:
 
 Output three blocks as **raw plain text** (no markdown, no code fences) so the user can paste into App Store Connect:
 
-1. **What's New in This Version** — Consolidate all entries from `CHANGELOG.md` from v1.0.0 through the current release. Use `•` bullets. Each entry: feature name em-dashed with a short description. The release script sets the per-version "What's New" automatically; this cumulative version is for the listing body.
+1. **What's New in This Version** — Cumulative release notes for the listing body. Structure:
+   - Current release: full bullet list, one per user-facing change (verbatim from the CHANGELOG's current section).
+   - Every prior version back to v1.0.0: one line per version, prefixed with `vX.Y.Z — `, summarizing that version's theme in a single sentence. Do NOT repeat every bullet — collapse feature sets into a short list. The goal is a scannable version history, not a 200-line dump.
+   - Use `•` bullets for the current release.
+   - The release script sets the per-version "What's New" (short form) automatically; this cumulative version is only for the ASC listing body.
 
 2. **Promotional Text** (170 characters max) — One sentence. Tone: confident, no fluff.
 
@@ -179,6 +185,15 @@ Handles: strip Sparkle from `project.yml` → archive → export → upload → 
 
 On failure after upload, the build is already in ASC — tell the user they can finish manually.
 
+**Recovery from mid-run abort.** The script strips Sparkle keys from `Clearly/Info.plist` at the top and restores them at the bottom. If it dies between those steps (entitlement check fails, archive fails, upload fails, etc.), the working tree is left dirty with Sparkle keys removed from `Info.plist` AND the Xcode project pointing at the App Store variant. Before retrying or running any other build, restore with:
+
+```bash
+git checkout Clearly/Info.plist
+xcodegen generate
+```
+
+Then fix the root cause and retry. A clean `git status` is the signal that recovery is complete.
+
 ### Step 7: Push and report
 
 Ensure all commits are on the remote:
@@ -200,6 +215,6 @@ Tell the user:
 - NEVER skip the changelog update
 - NEVER update both `CHANGELOG.md` and `CHANGELOG-iOS.md` in the same release — one platform, one changelog
 - NEVER bump Mac `MARKETING_VERSION` entries during an iOS release (and vice versa)
-- If the release script fails, do NOT retry — report the error and stop
+- If the release script fails, do NOT blindly retry. Report the error and stop. Retry is only okay after the root cause is identified and fixed (e.g., a bug in the script, a missing credential, a stale file). Never retry on an unexplained or transient-looking failure without diagnosing it first.
 - The release scripts handle git tagging — do not duplicate those steps
 - Un-scoped commits (no `[mac]`/`[ios]`/`[shared]`/`[chore]` prefix) halt the release until resolved
