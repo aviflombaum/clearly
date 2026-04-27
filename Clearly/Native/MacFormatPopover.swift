@@ -58,7 +58,7 @@ struct MacFormatPopover: View {
             Divider()
 
             Button {
-                performLiveEditorOnlyCommand(.addAnnotation)
+                performAddAnnotationCommand()
             } label: {
                 Label("Add Annotation", systemImage: "text.badge.plus")
                     .frame(maxWidth: .infinity, alignment: .leading)

@@ -95,6 +95,17 @@ struct MacDetailToolbar: ToolbarContent {
             .menuIndicator(.hidden)
             .disabled(workspace.activeDocumentID == nil || workspace.currentViewMode != .edit)
 
+            Button {
+                performAddAnnotationCommand()
+            } label: {
+                Label("Add Annotation", systemImage: "text.bubble")
+            }
+            .help("Add annotation to selected text")
+            .disabled(
+                workspace.activeDocumentID == nil ||
+                    (editorEngine == .livePreviewExperimental && workspace.currentViewMode != .edit)
+            )
+
             Menu {
                 if let url = workspace.currentFileURL {
                     Button("Copy File Path") { CopyActions.copyFilePath(url) }
@@ -595,6 +606,9 @@ struct MacDetailColumn: View {
             outlineState: outlineState,
             onTaskToggle: { [workspace] line, checked in
                 toggleTask(at: line, checked: checked, workspace: workspace)
+            },
+            onAnnotationAdded: { [workspace] updated in
+                workspace.currentFileText = updated
             },
             onWikiLinkClicked: { target, heading in
                 navigateToWikiLink(target: target, heading: heading, destinationMode: .preview)

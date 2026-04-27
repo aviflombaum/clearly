@@ -907,6 +907,16 @@ function insertSnippet(view: EditorView, snippet: string, selectedRangeFrom?: nu
   view.focus();
 }
 
+function requestAddAnnotation(view: EditorView) {
+  const selection = view.state.selection.main;
+  postMessage({
+    type: "addAnnotationRequested",
+    markdown: view.state.doc.toString(),
+    from: selection.from,
+    to: selection.to
+  });
+}
+
 function applyFormattingCommand(command: string) {
   if (!editor) {
     return;
@@ -1007,13 +1017,7 @@ function applyFormattingCommand(command: string) {
       insertSnippet(editor, "\n\n<div class=\"page-break\"></div>\n\n");
       break;
     case "addAnnotation": {
-      const selection = editor.state.selection.main;
-      postMessage({
-        type: "addAnnotationRequested",
-        markdown: editor.state.doc.toString(),
-        from: selection.from,
-        to: selection.to
-      });
+      requestAddAnnotation(editor);
       break;
     }
     case "findNext":

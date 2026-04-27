@@ -955,7 +955,7 @@ struct ClearlyApp: App {
                 Divider()
 
                 Button("Add Annotation...") {
-                    performLiveEditorOnlyCommand(.addAnnotation)
+                    performAddAnnotationCommand()
                 }
                 .keyboardShortcut("m", modifiers: [.command, .shift])
             }

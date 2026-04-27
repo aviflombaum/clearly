@@ -480,23 +480,13 @@ struct LiveEditorView: NSViewRepresentable {
                     return
                 }
 
-                let alert = NSAlert()
-                alert.messageText = "Add Annotation"
-                alert.informativeText = "Enter a note for the selected text."
-                alert.addButton(withTitle: "Add")
-                alert.addButton(withTitle: "Cancel")
-
-                let input = NSTextField(frame: NSRect(x: 0, y: 0, width: 360, height: 24))
-                input.placeholderString = "Note"
-                alert.accessoryView = input
-
-                guard alert.runModal() == .alertFirstButtonReturn else { return }
+                guard let comment = AnnotationPrompt.requestComment() else { return }
 
                 do {
                     let updated = try ChangedownAnnotationWriter.addAnnotation(
                         to: markdown,
                         utf16Range: NSRange(location: from, length: max(0, to - from)),
-                        comment: input.stringValue,
+                        comment: comment,
                         author: NSUserName()
                     )
                     self.hasReceivedDocChanged = true
@@ -507,8 +497,7 @@ struct LiveEditorView: NSViewRepresentable {
                         payload: ["markdown": updated, "epoch": self.parent.documentEpoch]
                     )
                 } catch {
-                    let errorAlert = NSAlert(error: error)
-                    errorAlert.runModal()
+                    AnnotationPrompt.present(error: error)
                 }
             }
         }

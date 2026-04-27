@@ -30,6 +30,7 @@ struct PreviewView: NSViewRepresentable {
     var findState: FindState?
     var outlineState: OutlineState?
     var onTaskToggle: ((Int, Bool) -> Void)?
+    var onAnnotationAdded: ((String) -> Void)?
     var onWikiLinkClicked: ((String, String?) -> Void)?
     var onTagClicked: ((String) -> Void)?
     var wikiFileNames: Set<String>?
@@ -71,9 +72,11 @@ struct PreviewView: NSViewRepresentable {
         webView.alphaValue = 0 // hidden until content loads
         context.coordinator.fileURL = fileURL
         context.coordinator.positionSyncID = positionSyncID
+        context.coordinator.markdown = markdown
         context.coordinator.findState = findState
         context.coordinator.outlineState = outlineState
         context.coordinator.onTaskToggle = onTaskToggle
+        context.coordinator.onAnnotationAdded = onAnnotationAdded
         context.coordinator.onWikiLinkClicked = onWikiLinkClicked
         context.coordinator.onTagClicked = onTagClicked
         let coordinator = context.coordinator
@@ -101,6 +104,12 @@ struct PreviewView: NSViewRepresentable {
             name: .highlightTextInPreview,
             object: nil
         )
+        NotificationCenter.default.addObserver(
+            context.coordinator,
+            selector: #selector(Coordinator.handleAddAnnotation(_:)),
+            name: .previewAnnotationCommand,
+            object: nil
+        )
 
         loadHTML(in: webView, context: context)
         return webView
@@ -111,6 +120,8 @@ struct PreviewView: NSViewRepresentable {
         webView.underPageBackgroundColor = Theme.backgroundColor
         context.coordinator.fileURL = fileURL
         context.coordinator.positionSyncID = positionSyncID
+        context.coordinator.markdown = markdown
+        context.coordinator.onAnnotationAdded = onAnnotationAdded
 
         // Detect mode change: restore scroll position when becoming visible
         if mode == .preview && context.coordinator.lastMode != .preview {
@@ -405,9 +416,11 @@ struct PreviewView: NSViewRepresentable {
         var didInitialLoad = false
         var fileURL: URL?
         var positionSyncID = ""
+        var markdown = ""
         var findState: FindState?
         var outlineState: OutlineState?
         var onTaskToggle: ((Int, Bool) -> Void)?
+        var onAnnotationAdded: ((String) -> Void)?
         var onWikiLinkClicked: ((String, String?) -> Void)?
         var onTagClicked: ((String) -> Void)?
         var skipNextReload = false
@@ -418,6 +431,28 @@ struct PreviewView: NSViewRepresentable {
         private var findCancellables = Set<AnyCancellable>()
         private var matchCount = 0
         private var currentMatchIdx = 0
+
+        @objc func handleAddAnnotation(_ notification: Notification) {
+            guard lastMode == .preview else { return }
+            guard let selectedText = SelectionBridge.selection(for: positionSyncID) else {
+                AnnotationPrompt.present(error: PreviewAnnotationMapper.Error.emptySelection)
+                return
+            }
+            guard let comment = AnnotationPrompt.requestComment() else { return }
+
+            do {
+                let range = try PreviewAnnotationMapper.sourceRange(for: selectedText, in: markdown)
+                let updated = try ChangedownAnnotationWriter.addAnnotation(
+                    to: markdown,
+                    range: range,
+                    comment: comment,
+                    author: NSUserName()
+                )
+                onAnnotationAdded?(updated)
+            } catch {
+                AnnotationPrompt.present(error: error)
+            }
+        }
 
         func observeFindState(_ state: FindState, webView: WKWebView) {
             self.webView = webView
