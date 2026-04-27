@@ -951,6 +951,13 @@ struct ClearlyApp: App {
                 Button("Page Break") {
                     performFormattingCommand(.pageBreak, selector: #selector(ClearlyTextView.insertPageBreak(_:)))
                 }
+
+                Divider()
+
+                Button("Add Annotation...") {
+                    performLiveEditorOnlyCommand(.addAnnotation)
+                }
+                .keyboardShortcut("m", modifiers: [.command, .shift])
             }
         }
 

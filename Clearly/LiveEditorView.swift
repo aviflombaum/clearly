@@ -431,6 +431,14 @@ struct LiveEditorView: NSViewRepresentable {
                     self.parent.findState?.currentIndex = currentIndex
                 }
 
+            case "addAnnotationRequested":
+                guard !isDismantled,
+                      LiveEditorSession.matches(documentID: parent.documentID),
+                      let markdown = body["markdown"] as? String,
+                      let from = body["from"] as? NSNumber,
+                      let to = body["to"] as? NSNumber else { return }
+                requestAnnotation(markdown: markdown, from: from.intValue, to: to.intValue)
+
             case "openLink":
                 guard LiveEditorSession.matches(documentID: parent.documentID) else { return }
                 let kind = body["kind"] as? String ?? "markdown"
@@ -460,6 +468,48 @@ struct LiveEditorView: NSViewRepresentable {
 
             default:
                 break
+            }
+        }
+
+        private func requestAnnotation(markdown: String, from: Int, to: Int) {
+            DispatchQueue.main.async { [weak self] in
+                guard let self, !self.isDismantled else { return }
+                guard from != to else {
+                    let errorAlert = NSAlert(error: ChangedownAnnotationWriterError.emptySelection)
+                    errorAlert.runModal()
+                    return
+                }
+
+                let alert = NSAlert()
+                alert.messageText = "Add Annotation"
+                alert.informativeText = "Enter a note for the selected text."
+                alert.addButton(withTitle: "Add")
+                alert.addButton(withTitle: "Cancel")
+
+                let input = NSTextField(frame: NSRect(x: 0, y: 0, width: 360, height: 24))
+                input.placeholderString = "Note"
+                alert.accessoryView = input
+
+                guard alert.runModal() == .alertFirstButtonReturn else { return }
+
+                do {
+                    let updated = try ChangedownAnnotationWriter.addAnnotation(
+                        to: markdown,
+                        utf16Range: NSRange(location: from, length: max(0, to - from)),
+                        comment: input.stringValue,
+                        author: NSUserName()
+                    )
+                    self.hasReceivedDocChanged = true
+                    self.lastSyncedText = updated
+                    self.parent.text = updated
+                    self.call(
+                        function: "setDocument",
+                        payload: ["markdown": updated, "epoch": self.parent.documentEpoch]
+                    )
+                } catch {
+                    let errorAlert = NSAlert(error: error)
+                    errorAlert.runModal()
+                }
             }
         }
 

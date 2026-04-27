@@ -32121,6 +32121,16 @@ $$`);
       case "pageBreak":
         insertSnippet(editor, '\n\n<div class="page-break"></div>\n\n');
         break;
+      case "addAnnotation": {
+        const selection = editor.state.selection.main;
+        postMessage({
+          type: "addAnnotationRequested",
+          markdown: editor.state.doc.toString(),
+          from: selection.from,
+          to: selection.to
+        });
+        break;
+      }
       case "findNext":
         findNext(editor);
         updateFindStatus(editor.state);
@@ -32170,6 +32180,13 @@ $$`);
       decorateWrapped(new RegExp("(?<!!)\\[([^\\]]+)\\]\\(([^)]+)\\)", "g"), "cm-live-link", (match2) => ({
         "data-live-link-kind": "markdown",
         "data-live-href": match2[2] ?? ""
+      }));
+      decorateWrapped(/\{==(.+?)==\}\{>>\s*(.+?)\s*<<\}\[\^(cn-[A-Za-z0-9.-]+)\]/g, "cm-live-annotation", (match2) => ({
+        "data-live-annotation-id": match2[3] ?? "",
+        "data-live-annotation-comment": match2[2] ?? ""
+      }));
+      decorateWrapped(/\{==(.+?)==\}\[\^(cn-[A-Za-z0-9.-]+)\]/g, "cm-live-annotation", (match2) => ({
+        "data-live-annotation-id": match2[2] ?? ""
       }));
       decorateWrapped(/\[\[([^\]#]+(?:#[^\]]+)?)\]\]/g, "cm-live-wiki-link", (match2) => {
         const raw = match2[1] ?? "";
@@ -32553,6 +32570,12 @@ $$`);
         borderRadius: "3px",
         padding: "1px 5px",
         fontSize: "0.9em"
+      },
+      ".cm-live-annotation": {
+        backgroundColor: isDark ? "rgba(255, 214, 0, 0.2)" : "rgba(255, 212, 0, 0.24)",
+        borderBottom: `1px solid ${isDark ? "rgba(255, 214, 0, 0.45)" : "rgba(191, 142, 0, 0.45)"}`,
+        borderRadius: "3px",
+        padding: "0.05em 0.15em"
       },
       ".cm-live-prefix": {
         display: "inline-flex",

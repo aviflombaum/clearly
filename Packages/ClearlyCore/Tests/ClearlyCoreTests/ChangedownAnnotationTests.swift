@@ -115,4 +115,88 @@ final class ChangedownAnnotationTests: XCTestCase {
         XCTAssertTrue(result.markdown.contains("&lt;unsafe&gt; &amp; text"))
         XCTAssertTrue(result.markdown.contains("Quote &quot;this&quot; &amp; that"))
     }
+
+    func testWriterAddsCanonicalFootnoteBackedAnnotation() throws {
+        let markdown = "Select a few words in this paragraph."
+        let range = markdown.range(of: "few words")!
+        let date = fixedDate()
+
+        let result = try ChangedownAnnotationWriter.addAnnotation(
+            to: markdown,
+            range: range,
+            comment: "Phrase this more concretely.",
+            author: "avi",
+            date: date
+        )
+
+        XCTAssertTrue(result.contains("Select a {==few words==}[^cn-1] in this paragraph."))
+        XCTAssertTrue(result.contains("[^cn-1]: @avi | 2026-04-27 | comment | proposed"))
+        XCTAssertTrue(result.contains("@avi 2026-04-27: Phrase this more concretely."))
+        XCTAssertFalse(result.contains("{>>"))
+    }
+
+    func testWriterAllocatesNextNumericID() throws {
+        let markdown = """
+        Existing {==text==}[^cn-3].
+
+        [^cn-3]: @avi | 2026-04-27 | comment | proposed
+            @avi 2026-04-27: Existing.
+
+        Add another annotation here.
+        """
+        let range = markdown.range(of: "another annotation")!
+
+        let result = try ChangedownAnnotationWriter.addAnnotation(
+            to: markdown,
+            range: range,
+            comment: "New note.",
+            author: "@avi",
+            date: fixedDate()
+        )
+
+        XCTAssertTrue(result.contains("{==another annotation==}[^cn-4]"))
+        XCTAssertTrue(result.contains("[^cn-4]: @avi | 2026-04-27 | comment | proposed"))
+    }
+
+    func testWriterRejectsEmptySelection() {
+        let markdown = "Text"
+        XCTAssertThrowsError(try ChangedownAnnotationWriter.addAnnotation(
+            to: markdown,
+            range: markdown.startIndex..<markdown.startIndex,
+            comment: "Note",
+            author: "@avi"
+        )) { error in
+            XCTAssertEqual(error as? ChangedownAnnotationWriterError, .emptySelection)
+        }
+    }
+
+    func testWriterRejectsMultilineSelection() {
+        let markdown = "First line\nSecond line"
+        let range = markdown.startIndex..<markdown.endIndex
+        XCTAssertThrowsError(try ChangedownAnnotationWriter.addAnnotation(
+            to: markdown,
+            range: range,
+            comment: "Note",
+            author: "@avi"
+        )) { error in
+            XCTAssertEqual(error as? ChangedownAnnotationWriterError, .multilineSelection)
+        }
+    }
+
+    func testWriterRejectsExistingAnnotationLine() {
+        let markdown = "Existing {==text==}[^cn-1]."
+        let range = markdown.range(of: "Existing")!
+        XCTAssertThrowsError(try ChangedownAnnotationWriter.addAnnotation(
+            to: markdown,
+            range: range,
+            comment: "Note",
+            author: "@avi"
+        ))
+    }
+
+    private func fixedDate() -> Date {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = TimeZone(secondsFromGMT: 0)!
+        return calendar.date(from: DateComponents(year: 2026, month: 4, day: 27))!
+    }
 }
