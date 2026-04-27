@@ -8,6 +8,8 @@ import Combine
 /// This intercepts mouseDown in the top strip and calls `performDrag` instead.
 private final class DraggableWKWebView: WKWebView {
     static let dragHeight: CGFloat = 28
+    var annotationMenuAction: (() -> Void)?
+    private var annotationMenuInstaller: WebAnnotationContextMenuInstaller?
 
     override func mouseDown(with event: NSEvent) {
         let local = convert(event.locationInWindow, from: nil)
@@ -17,6 +19,12 @@ private final class DraggableWKWebView: WKWebView {
             return
         }
         super.mouseDown(with: event)
+    }
+
+    func installAnnotationMenu() {
+        annotationMenuInstaller = WebAnnotationContextMenuInstaller(webView: self) { [weak self] in
+            self?.annotationMenuAction?()
+        }
     }
 }
 
@@ -68,8 +76,13 @@ struct PreviewView: NSViewRepresentable {
         config.userContentController.addUserScript(Self.copyButtonUserScript())
         let webView = DraggableWKWebView(frame: .zero, configuration: config)
         webView.navigationDelegate = context.coordinator
+        webView.annotationMenuAction = {
+            NotificationCenter.default.post(name: .previewAnnotationCommand, object: nil)
+        }
+        webView.installAnnotationMenu()
         webView.underPageBackgroundColor = Theme.backgroundColor
         webView.alphaValue = 0 // hidden until content loads
+        context.coordinator.webView = webView
         context.coordinator.fileURL = fileURL
         context.coordinator.positionSyncID = positionSyncID
         context.coordinator.markdown = markdown
@@ -196,10 +209,13 @@ struct PreviewView: NSViewRepresentable {
         document.addEventListener('selectionchange', function() {
             var sel = window.getSelection();
             var text = sel ? sel.toString() : '';
-            if (text !== _lastSelText) {
-                _lastSelText = text;
-                window.webkit.messageHandlers.selectionCapture.postMessage({ text: text });
+            _lastSelText = text;
+            var rect = null;
+            if (sel && sel.rangeCount > 0 && text.length > 0) {
+                var bounds = sel.getRangeAt(0).getBoundingClientRect();
+                rect = { x: bounds.left, y: bounds.top, width: bounds.width, height: bounds.height };
             }
+            window.webkit.messageHandlers.selectionCapture.postMessage({ text: text, rect: rect });
         });
         """
         let html = """
@@ -427,6 +443,7 @@ struct PreviewView: NSViewRepresentable {
         var isLoadingContent = false
         var pendingScrollLine: Int?
         var pendingHighlightText: String?
+        var selectionScreenRect: NSRect?
         weak var webView: WKWebView?
         private var findCancellables = Set<AnyCancellable>()
         private var matchCount = 0
@@ -438,7 +455,7 @@ struct PreviewView: NSViewRepresentable {
                 AnnotationPrompt.present(error: PreviewAnnotationMapper.Error.emptySelection)
                 return
             }
-            guard let comment = AnnotationPrompt.requestComment() else { return }
+            guard let comment = AnnotationPrompt.requestComment(anchorScreenRect: selectionScreenRect) else { return }
 
             do {
                 let range = try PreviewAnnotationMapper.sourceRange(for: selectedText, in: markdown)
@@ -446,7 +463,7 @@ struct PreviewView: NSViewRepresentable {
                     to: markdown,
                     range: range,
                     comment: comment,
-                    author: NSUserName()
+                    author: AnnotationAuthor.current
                 )
                 onAnnotationAdded?(updated)
             } catch {
@@ -875,6 +892,7 @@ struct PreviewView: NSViewRepresentable {
                let body = message.body as? [String: Any],
                let text = body["text"] as? String {
                 SelectionBridge.setSelection(text, for: self.positionSyncID)
+                selectionScreenRect = screenRect(from: body["rect"])
                 return
             }
 
@@ -884,6 +902,26 @@ struct PreviewView: NSViewRepresentable {
 
             scrollFraction = fraction
             ScrollBridge.setFraction(fraction, for: self.positionSyncID)
+        }
+
+        private func screenRect(from value: Any?) -> NSRect? {
+            guard let webView,
+                  let rect = value as? [String: Any],
+                  let x = (rect["x"] as? NSNumber)?.doubleValue,
+                  let y = (rect["y"] as? NSNumber)?.doubleValue,
+                  let width = (rect["width"] as? NSNumber)?.doubleValue,
+                  let height = (rect["height"] as? NSNumber)?.doubleValue,
+                  width > 0,
+                  height > 0 else { return nil }
+
+            let viewRect = NSRect(
+                x: x,
+                y: webView.isFlipped ? y : Double(webView.bounds.height) - y - height,
+                width: width,
+                height: height
+            )
+            guard let window = webView.window else { return nil }
+            return window.convertToScreen(webView.convert(viewRect, to: nil))
         }
     }
 

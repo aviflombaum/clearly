@@ -472,14 +472,15 @@ final class ClearlyTextView: PersistentTextCheckingTextView {
             AnnotationPrompt.present(error: ChangedownAnnotationWriterError.emptySelection)
             return
         }
-        guard let comment = AnnotationPrompt.requestComment() else { return }
+        let anchor = firstRect(forCharacterRange: range, actualRange: nil)
+        guard let comment = AnnotationPrompt.requestComment(anchorScreenRect: anchor.isEmpty ? nil : anchor) else { return }
 
         do {
             let updated = try ChangedownAnnotationWriter.addAnnotation(
                 to: string,
                 utf16Range: range,
                 comment: comment,
-                author: NSUserName()
+                author: AnnotationAuthor.current
             )
             insertText(updated, replacementRange: NSRange(location: 0, length: (string as NSString).length))
         } catch {

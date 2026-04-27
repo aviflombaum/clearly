@@ -51,6 +51,7 @@ enum UserDefaultsMigrator {
         "showLineNumbers",
         "showMenuBarIcon",
         "sidebarSize",
+        "annotationUsername",
         "sidebarTagsExpanded",
         "sidebarPinnedExpanded",
         "sidebarRecentsExpanded",

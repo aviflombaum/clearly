@@ -909,11 +909,22 @@ function insertSnippet(view: EditorView, snippet: string, selectedRangeFrom?: nu
 
 function requestAddAnnotation(view: EditorView) {
   const selection = view.state.selection.main;
+  const fromRect = view.coordsAtPos(selection.from);
+  const toRect = view.coordsAtPos(selection.to);
+  const selectionRect = fromRect && toRect
+    ? {
+        x: Math.min(fromRect.left, toRect.left),
+        y: Math.min(fromRect.top, toRect.top),
+        width: Math.max(1, Math.abs(toRect.right - fromRect.left)),
+        height: Math.max(fromRect.bottom, toRect.bottom) - Math.min(fromRect.top, toRect.top)
+      }
+    : null;
   postMessage({
     type: "addAnnotationRequested",
     markdown: view.state.doc.toString(),
     from: selection.from,
-    to: selection.to
+    to: selection.to,
+    selectionRect
   });
 }
 
