@@ -105,6 +105,9 @@ struct PreviewView: NSViewRepresentable {
         outlineState?.scrollToHeading = { [weak coordinator = context.coordinator] heading in
             coordinator?.scrollToHeading(heading)
         }
+        outlineState?.scrollToPreviewAnchor = { [weak coordinator = context.coordinator] anchor in
+            coordinator?.scrollToAnchor(anchor)
+        }
         NotificationCenter.default.addObserver(
             context.coordinator,
             selector: #selector(Coordinator.handleScrollToLine(_:)),
@@ -564,6 +567,42 @@ struct PreviewView: NSViewRepresentable {
                     if (dist < bestDist) { best = headings[i]; bestDist = dist; }
                 }
                 if (best) flash(best);
+            })();
+            """
+            webView?.evaluateJavaScript(js)
+        }
+
+        func scrollToAnchor(_ anchor: PreviewSourceAnchor) {
+            let js = """
+            (function() {
+                var targetLine = \(anchor.startLine);
+                var targetColumn = \(anchor.startColumn);
+                var candidates = Array.from(document.querySelectorAll('[data-sourcepos]'));
+                var best = null;
+                for (var i = 0; i < candidates.length; i++) {
+                    var sp = candidates[i].getAttribute('data-sourcepos');
+                    if (!sp) continue;
+                    var match = /^(\\d+):(\\d+)-(\\d+):(\\d+)$/.exec(sp);
+                    if (!match) continue;
+                    var startLine = parseInt(match[1], 10);
+                    var startColumn = parseInt(match[2], 10);
+                    var endLine = parseInt(match[3], 10);
+                    if (startLine <= targetLine && endLine >= targetLine) {
+                        best = candidates[i];
+                        break;
+                    }
+                    if (startLine < targetLine || (startLine === targetLine && startColumn <= targetColumn)) {
+                        best = candidates[i];
+                    } else if (best === null) {
+                        best = candidates[i];
+                        break;
+                    } else {
+                        break;
+                    }
+                }
+                if (best) {
+                    best.scrollIntoView({behavior:'smooth', block:'center'});
+                }
             })();
             """
             webView?.evaluateJavaScript(js)

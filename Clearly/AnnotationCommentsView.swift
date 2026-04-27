@@ -44,13 +44,9 @@ struct AnnotationCommentsView: View {
                 Spacer()
             } else {
                 ScrollView {
-                    LazyVStack(alignment: .leading, spacing: 0) {
-                        ForEach(commentsState.comments) { comment in
-                            AnnotationCommentRow(comment: comment) {
-                                outlineState.scrollToRange?(comment.sourceRange)
-                                outlineState.scrollToPreviewAnchor?(comment.previewAnchor)
-                            }
-                        }
+                    AnnotationCommentRows(comments: commentsState.comments) { comment in
+                        outlineState.scrollToRange?(comment.sourceRange)
+                        outlineState.scrollToPreviewAnchor?(comment.previewAnchor)
                     }
                     .padding(.vertical, 6)
                 }
@@ -58,6 +54,22 @@ struct AnnotationCommentsView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Theme.outlinePanelBackgroundSwiftUI)
+    }
+}
+
+private struct AnnotationCommentRows: View {
+    let comments: [AnnotationCommentItem]
+    let onSelect: (AnnotationCommentItem) -> Void
+
+    var body: some View {
+        LazyVStack(alignment: .leading, spacing: 0) {
+            ForEach(comments.indices, id: \.self) { index in
+                let comment = comments[index]
+                AnnotationCommentRow(comment: comment) {
+                    onSelect(comment)
+                }
+            }
+        }
     }
 }
 
