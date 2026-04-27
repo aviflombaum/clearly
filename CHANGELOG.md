@@ -2,6 +2,21 @@
 
 ## [Unreleased]
 
+## [2.6.0] - 2026-04-27
+- LLM Wiki vaults — turn any folder into an AI-curated knowledge base with AGENTS.md, index.md, and log.md
+- Capture (⌃⌘I): paste a URL or text and the agent files it as new notes
+- Chat (⌃⌘A): ask questions about your vault with semantic retrieval and cited sources; "File as Note" for keepers
+- Review: runs once a day to propose tidy-ups; "Review ready" badge above the log sidebar
+- Diff-review sheet on every agent-proposed change — accept or reject per file before anything lands
+- Log timeline sidebar (⌃⌘T) shows every accepted operation with timestamp, kind, and changed files
+- Powered by your local Claude Code or Codex CLI subscription — no API key, no extra billing
+- Settings → Wiki tab to pick a runner and see install status
+- File → New LLM Wiki seeds a fresh vault; right-click any vault for Convert to LLM Wiki…
+- Sidebar marks wiki vaults with a book icon and WIKI badge
+- Clickable [[wiki-links]] in chat answers
+- New `semantic_search` MCP tool for embedding-based retrieval from any agent
+- Marketing site links now show a preview image when shared
+
 ## [2.5.0] - 2026-04-24
 - Paste and drop images directly into the editor
 - Drag and drop files and folders in the sidebar to reorganize
