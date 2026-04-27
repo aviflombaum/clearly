@@ -546,7 +546,7 @@ private struct SyncSettingsTab: View {
                 Image(systemName: capability.iconName)
                     .foregroundStyle(isCloud ? AnyShapeStyle(.tint) : AnyShapeStyle(.secondary))
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(location.name)
+                    Text(location.displayName)
                         .font(.system(size: 13, weight: .medium))
                     Text(location.url.path)
                         .font(.caption2)

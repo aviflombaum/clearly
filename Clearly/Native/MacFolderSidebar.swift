@@ -179,7 +179,7 @@ struct MacFolderSidebar: View {
             }
         } header: {
             collapsibleHeader(
-                title: location.name,
+                title: location.displayName,
                 systemImage: location.isWiki ? "book.closed" : "folder",
                 isExpanded: locationExpandedBinding(location),
                 isWiki: location.isWiki
@@ -190,6 +190,15 @@ struct MacFolderSidebar: View {
                 }
                 Button("New Folder…", systemImage: "folder.badge.plus") {
                     promptForNewFolder(in: location.url)
+                }
+                Divider()
+                Button("Rename Vault…", systemImage: "pencil") {
+                    promptForVaultName(location)
+                }
+                if location.hasCustomName {
+                    Button("Reset Vault Name", systemImage: "arrow.counterclockwise") {
+                        workspace.setCustomName(nil, for: location.id)
+                    }
                 }
                 Divider()
                 Button("Reveal in Finder", systemImage: "folder") {
@@ -214,7 +223,7 @@ struct MacFolderSidebar: View {
 
     private func convertToWiki(_ location: BookmarkedLocation) {
         let confirm = NSAlert()
-        confirm.messageText = "Convert \"\(location.name)\" to an LLM Wiki?"
+        confirm.messageText = "Convert \"\(location.displayName)\" to an LLM Wiki?"
         confirm.informativeText = """
         Clearly will add these files to the folder:
 
@@ -245,6 +254,23 @@ struct MacFolderSidebar: View {
             alert.alertStyle = .warning
             alert.runModal()
         }
+    }
+
+    private func promptForVaultName(_ location: BookmarkedLocation) {
+        let alert = NSAlert()
+        alert.messageText = "Rename Vault"
+        alert.informativeText = "This changes the name shown in Clearly. The folder on disk will not be renamed."
+        alert.addButton(withTitle: "Rename")
+        alert.addButton(withTitle: "Cancel")
+
+        let textField = NSTextField(frame: NSRect(x: 0, y: 0, width: 280, height: 24))
+        textField.stringValue = location.displayName
+        textField.placeholderString = location.name
+        alert.accessoryView = textField
+        alert.window.initialFirstResponder = textField
+
+        guard alert.runModal() == .alertFirstButtonReturn else { return }
+        workspace.setCustomName(textField.stringValue, for: location.id)
     }
 
     private func locationExpandedBinding(_ location: BookmarkedLocation) -> Binding<Bool> {

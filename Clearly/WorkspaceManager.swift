@@ -1481,6 +1481,21 @@ final class WorkspaceManager {
         UserDefaults.standard.set(Array(collapsedLocationIDs), forKey: Self.collapsedLocationIDsKey)
     }
 
+    // MARK: - Vault Names
+
+    func customName(for locationID: UUID) -> String? {
+        locations.first { $0.id == locationID }?.customName
+    }
+
+    func setCustomName(_ name: String?, for locationID: UUID) {
+        guard let index = locations.firstIndex(where: { $0.id == locationID }) else { return }
+        let trimmed = name?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        let normalized = trimmed.isEmpty ? nil : trimmed
+        guard locations[index].customName != normalized else { return }
+        locations[index].customName = normalized
+        persistLocations()
+    }
+
     // MARK: - Folder Metadata Lookup
 
     /// Direct folder color lookup (no ancestor walk). Returns nil if unset.
@@ -1568,7 +1583,7 @@ final class WorkspaceManager {
     // MARK: - Persistence: Locations
 
     private func persistLocations() {
-        let stored = locations.map { StoredBookmark(id: $0.id, bookmarkData: $0.bookmarkData) }
+        let stored = locations.map { StoredBookmark($0) }
         if let data = try? JSONEncoder().encode(stored) {
             UserDefaults.standard.set(data, forKey: Self.locationBookmarksKey)
         }
@@ -1623,7 +1638,8 @@ final class WorkspaceManager {
                 url: url,
                 bookmarkData: bookmarkData,
                 fileTree: [],
-                isAccessible: true
+                isAccessible: true,
+                customName: bookmark.customName
             )
             locations.append(location)
             startFSStream(for: location)
