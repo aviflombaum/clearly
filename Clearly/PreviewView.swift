@@ -152,7 +152,12 @@ struct PreviewView: NSViewRepresentable {
     private func loadHTML(in webView: WKWebView, context: Context) {
         context.coordinator.lastContentKey = contentKey
         context.coordinator.isLoadingContent = true
-        let rawBody = MarkdownRenderer.renderHTML(markdown, appLinkURLs: true, includeFrontmatter: !hideFrontmatterInPreview)
+        let rawBody = MarkdownRenderer.renderHTML(
+            markdown,
+            appLinkURLs: true,
+            includeFrontmatter: !hideFrontmatterInPreview,
+            renderAnnotations: true
+        )
         let htmlBody = LocalImageSupport.resolveImageSources(in: rawBody, relativeTo: fileURL)
         let wikiFilesJSON: String = {
             guard let names = wikiFileNames, !names.isEmpty else { return "[]" }
@@ -322,6 +327,53 @@ struct PreviewView: NSViewRepresentable {
             });
             a.addEventListener('mouseleave', function() {
                 if (popover) { popover.remove(); popover = null; }
+            });
+        });
+        // Annotation click popovers
+        document.querySelectorAll('.cd-annotation').forEach(function(annotation) {
+            annotation.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                document.querySelectorAll('.annotation-popover').forEach(function(existing) {
+                    existing.remove();
+                });
+
+                var popover = document.createElement('div');
+                popover.className = 'annotation-popover';
+
+                var title = document.createElement('div');
+                title.className = 'annotation-popover-title';
+                title.textContent = annotation.getAttribute('data-change-id') || 'Annotation';
+                popover.appendChild(title);
+
+                var metaParts = [];
+                var author = annotation.getAttribute('data-author');
+                var date = annotation.getAttribute('data-date');
+                var status = annotation.getAttribute('data-status');
+                if (author) metaParts.push(author);
+                if (date) metaParts.push(date);
+                if (status) metaParts.push(status);
+                if (metaParts.length) {
+                    var meta = document.createElement('div');
+                    meta.className = 'annotation-popover-meta';
+                    meta.textContent = metaParts.join(' • ');
+                    popover.appendChild(meta);
+                }
+
+                var comment = document.createElement('div');
+                comment.textContent = annotation.getAttribute('data-comment') || 'No note text.';
+                popover.appendChild(comment);
+
+                document.body.appendChild(popover);
+                var rect = annotation.getBoundingClientRect();
+                popover.style.top = (rect.bottom + window.scrollY + 8) + 'px';
+                popover.style.left = Math.max(8, Math.min(rect.left, window.innerWidth - 420)) + 'px';
+            });
+        });
+        document.addEventListener('click', function(e) {
+            if (e.target.closest && e.target.closest('.annotation-popover, .cd-annotation')) return;
+            document.querySelectorAll('.annotation-popover').forEach(function(existing) {
+                existing.remove();
             });
         });
         // Wiki-link broken detection
